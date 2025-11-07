@@ -1,36 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-// 假设你有一个封装好的 axios 实例，用于调用 API
-// import { loginAPI } from '@/api/login'; // <--- 假设的 API 文件
-
-// ----------------------------------------------------
-// !!! 这是一个模拟的 API 调用，你需要替换成你真实的 API !!!
-// ----------------------------------------------------
-// 模拟一个登录 API
-const fakeLoginAPI = (username: string, password: string) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (username === 'admin' && password === '123456') {
-        // 模拟成功返回的数据
-        resolve({
-          message: '登录成功',
-          token: 'your-jwt-token-from-server-xxxxxxxx',
-          userInfo: {
-            id: 1,
-            username: 'admin',
-            avatar: 'http://path.to/your/avatar.jpg'
-          }
-        });
-      } else {
-        // 模拟失败返回的数据
-        reject(new Error('用户名或密码错误'));
-      }
-    }, 500); // 模拟 500 毫秒的网络延迟
-  });
-};
-// ----------------------------------------------------
-
+import { loginAPI } from '@/api/user';
 
 /**
  * 定义用户 Store (仓库)
@@ -72,17 +43,16 @@ export const useUserStore = defineStore('user', () => {
   const login = async (username: string, password: string) => {
     try {
       // 1. 调用你的真实 API
-      // const response = await loginAPI({ username, password }); // <-- 真实的调用
-      const response: any = await fakeLoginAPI(username, password); // <-- 使用我们模拟的 API
+      const response = await loginAPI({ username, password }); // <-- 真实的调用
 
       // 2. 登录成功，更新 State
-      token.value = response.token;
-      userInfo.value = response.userInfo;
+      token.value = response.data.data.token;
+      userInfo.value = response.data.data.userInfo;
 
       // 3. (关键!) 将 token 和用户信息存入 localStorage
       //    这样用户关闭浏览器或刷新页面后，状态依然存在
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('userInfo', JSON.stringify(response.userInfo));
+      localStorage.setItem('token', response.data.data.token);
+      localStorage.setItem('userInfo', JSON.stringify(response.data.data.userInfo));
 
       // 4. (注意!) 这里不需要返回任何东西，也不需要 ElMessage 或 router.push
       //    因为 LoginView.vue 的 try 块会自动继续执行那里的 ElMessage 和 push
@@ -110,7 +80,7 @@ export const useUserStore = defineStore('user', () => {
     // 3. (可选) 跳转到登录页
     router.push('/login');
   };
-  
+
 
   // === 4. Return ===
   // 把你需要“暴露”给所有组件的 state, getters 和 actions 返回
