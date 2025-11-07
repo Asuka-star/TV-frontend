@@ -1,18 +1,28 @@
 <template>
-  <div class="login-container">
-    <el-card class="login-card" header="用户登录">
+  <div class="login-container" style="display:flex;justify-content:center;align-items:center;min-height:60vh;">
+    <el-card class="login-card" header="用户登录" style="width:360px;padding:16px;">
       <el-form
+        class="login-form"
         :model="loginForm"
         :rules="loginRules"
         ref="loginFormRef"
         @submit.prevent="handleLogin"
       >
+        <el-alert
+          v-if="showError"
+          :title="errorMessage"
+          type="error"
+          :closable="true"
+          show-icon
+          @close="showError = false"
+          class="login-error"
+        />
         <el-form-item prop="username">
           <el-input
             v-model="loginForm.username"
-            placeholder="请输入用户名"
+            placeholder="用户名"
             prefix-icon="User"
-            size="large"
+            size="small"
           />
         </el-form-item>
 
@@ -20,10 +30,11 @@
           <el-input
             v-model="loginForm.password"
             type="password"
-            placeholder="请输入密码"
+            placeholder="密码"
             prefix-icon="Lock"
+
             show-password
-            size="large"
+            size="small"
           />
         </el-form-item>
 
@@ -33,13 +44,14 @@
             class="login-button"
             native-type="submit"
             :loading="loading"
-            size="large"
+            size="small"
+            style="width:100%;"
           >
-            登 录
+            登录
           </el-button>
         </el-form-item>
 
-        <div class="links">
+        <div class="links" style="display:flex;justify-content:space-between;font-size:12px;">
           <router-link to="/register">
             <el-link type="info">用户注册</el-link>
           </router-link>
@@ -71,8 +83,10 @@ const userStore = useUserStore();
 
 // 5. 绑定表单 DOM，用于校验
 const loginFormRef = ref<FormInstance | null>(null); // 👈 修复 1：指定类型
-// 6. 按钮加载状态
+// 6. 按钮加载状态和错误状态
 const loading = ref(false);
+const errorMessage = ref('');
+const showError = ref(false);
 
 // 7. 表单数据
 const loginForm = reactive({
@@ -84,9 +98,11 @@ const loginForm = reactive({
 const loginRules = reactive({
   username: [
     { required: true, message: '用户名不能为空', trigger: 'blur' },
+    { pattern: /^[\u4e00-\u9fa5a-zA-Z0-9]{6,12}$/, message: '"用户名不能包括特殊符号,并且长度为6-12位', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '密码不能为空', trigger: 'blur' },
+    { pattern: /^[a-zA-Z0-9]{8,16}$/, message: '密码只能包括大小写字母和数字,并且长度在8-16位', trigger: 'blur' }
   ],
 });
 
@@ -103,26 +119,67 @@ const handleLogin = async () => {
       try {
         await userStore.login(loginForm.username, loginForm.password);
         ElMessage.success('登录成功');
+        errorMessage.value = '';
+        showError.value = false;
         router.push('/home');
-      } catch (error) { // 'error' 是 unknown 类型
-        // 9.5. 统一的错误处理
+      } catch (error) {
+        // 处理不同类型的错误
+        let msg = '登录失败，请稍后重试';
         
-        let errorMessage = '登录失败';
-        // 👈 修复 2：在使用前检查 error 的类型
         if (error instanceof Error) {
-          errorMessage = error.message;
+          const errMsg = error.message.toLowerCase();
+          if (errMsg.includes('password') || errMsg.includes('密码')) {
+            msg = '密码错误，请重新输入';
+          } else if (errMsg.includes('user') || errMsg.includes('用户')) {
+            msg = '用户名不存在';
+          } else if (errMsg.includes('network') || errMsg.includes('timeout')) {
+            msg = '网络连接失败，请检查网络后重试';
+          }
+          errorMessage.value = msg;
         }
-        ElMessage.error(errorMessage);
+        
+        showError.value = true;
+        ElMessage({
+          message: msg,
+          type: 'error',
+          duration: 3000,
+          showClose: true
+        });
 
       } finally {
         loading.value = false;
       }
     } else {
-      ElMessage.warning('请检查表单输入');
+      ElMessage.warning('请检查登录信息');
     }
   });
 };
 </script>
 
 <style scoped>
+.login-card {
+  /* 可通过修改这个变量来调整 input 之间的垂直间距 */
+  --form-item-gap: 16px; /* 默认 12px，可改为 8px / 16px 等 */
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--form-item-gap);
+}
+
+/* 确保 Element Plus 默认的 .el-form-item margin 不会与 gap 冲突 */
+.login-form ::v-deep .el-form-item {
+  margin-bottom: 0;
+}
+
+.login-error {
+  margin-bottom: var(--form-item-gap);
+  border-radius: 4px;
+}
+
+.login-error ::v-deep .el-alert__title {
+  font-size: 13px;
+  line-height: 1.4;
+}
 </style>
