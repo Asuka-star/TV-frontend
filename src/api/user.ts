@@ -26,5 +26,5 @@ export const loginAPI = (data:ILoginData)=>{
  * @returns 
  */
 export const registerAPI=(data:IRegisterData)=>{
-    return apiClient.post('/user/register',data);
+    return apiClient.post('/user',data);
 }

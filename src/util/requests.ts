@@ -33,31 +33,35 @@ apiClient.interceptors.response.use(
         return response;
     },
     (error) => {
-        // 任何超出 2xx 范围的状态码都会触发该函数
-        // 统一处理 HTTP 错误
-        let message = '请求失败'
+        // 统一处理 HTTP 错误，优先展示后端返回的 message
+        let message = '请求失败';
         if (error.response) {
-            switch (error.response.status) {
-                case 401:
-                    message = '未授权，请重新登录'
-                    // 可以在这里调用 userStore.logout() 并跳转到登录页
-                    useUserStore().logout() // 假设 store 里有 logout 方法
-                    break
-                case 403:
-                    message = '禁止访问'
-                    break
-                case 404:
-                    message = '请求地址不存在'
-                    break
-                case 500:
-                    message = '服务器内部错误'
-                    break
-                default:
-                    message = error.message
+            // 优先展示后端返回的 message 字段
+            if (error.response.data && error.response.data.message) {
+                message = error.response.data.message;
+            } else {
+                switch (error.response.status) {
+                    case 401:
+                        message = '未授权，请重新登录';
+                        useUserStore().logout();
+                        break;
+                    case 403:
+                        message = '禁止访问';
+                        break;
+                    case 404:
+                        message = '请求地址不存在';
+                        break;
+                    case 500:
+                        message = '服务器内部错误';
+                        break;
+                    default:
+                        message = error.message;
+                }
             }
         }
-        ElMessage.error(message)
-        return Promise.reject(error)
+        ElMessage.error(message);
+        // 不再传递详细错误到页面，页面只需处理成功逻辑
+        return Promise.reject(error);
     }
 );
 export default apiClient;
