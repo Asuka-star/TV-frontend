@@ -121,7 +121,7 @@ const handleLogin = async () => {
         ElMessage.success('登录成功');
         errorMessage.value = '';
         showError.value = false;
-        router.push('/home');
+        router.push('/posts');
       } catch (error) {
         // 处理不同类型的错误
         let msg = '登录失败，请稍后重试';
