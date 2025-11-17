@@ -135,7 +135,7 @@ const registerRules = reactive({
 
 // 9. 注册逻辑
 const handleRegister = async () => {
-  if (!registerFormRef.value) return;
+  if (!registerFormRef.value) return; 
 
   // 现在 registerFormRef.value.validate 和 valid 都不会报错
   await registerFormRef.value.validate(async (valid) => {
@@ -183,7 +183,7 @@ const handleRegister = async () => {
         loading.value = false;
       }
     } else {
-      ElMessage.warning('请检查登录信息');
+      ElMessage.warning('请检查注册信息');
     }
   });
 };

@@ -11,6 +11,11 @@ const apiClient = axios.create({
 // 请求拦截器
 apiClient.interceptors.request.use(
     (config) => {
+        const whiteList=['/user/login','/user'];
+        if(config.url&&whiteList.includes(config.url||'')){
+            return config;
+        }
+
         // 在请求发送之前做些什么，比如添加 token 到请求头
         const userStore = useUserStore();
         // 如果有token
